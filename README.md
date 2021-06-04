@@ -1,5 +1,5 @@
 # AIOps Evolution - Supplemental Materials
-This repository contains the replication package for the paper "When and How Should We Maintain AIOps Models Under Data Evolution? An Exploratory Study".
+This repository contains the replication package for the paper "Assessing the Maturity of Model Maintenance Techniques for AIOps Solutions".
 
 ## Introduction
 We organize the replication package into four file folders.
@@ -19,8 +19,9 @@ Our code is based the following packages and versions:
 - Mkl: 2019.0
 - Statsmodels: 0.11.1
 - Xgboost: 1.2.1
+- Scikit-multiflow: 0.5.3
 
-We recommend using an [Anaconda](https://docs.anaconda.com/anaconda/install/) environment with Python version 3.8.3, then install the `xgboost` and `statsmodels` packages using `pip`, then every Python requirement should be met.
+We recommend using an [Anaconda](https://docs.anaconda.com/anaconda/install/) environment with Python version 3.8.3, then install the `xgboost`, `statsmodels`, and `skmultiflow` packages using `pip`, then every Python requirement should be met.
 
 ## Data preprocessing
 This part contains code and materials for preprocessing the dataset. All code could be found under the `preprocessing` folder.
@@ -54,21 +55,28 @@ The experiment code accepts the following command-line arguments to select model
 1. `-d` is a **required** parameter for choosing the dataset. Two choices are available: `g` for the Google dataset, `b` for the Backblaze dataset.
 2. `-m` is a **required** parameter for choosing the model. Five choices are available: `lr`, `cart`, `rf`, `gbdt`, and `nn`. Please note that the argument should be all *lowercase* letters.
 3. `-n` is an optional parameter for the repetition time of the experiments. The default value is 100 iterations, which is also the same iteration number we used in our paper.
+4. `-s` is an optional parameter for the starting round of the experiment. It would be useful if you would like to resume experiment from a specific round.
 
-As some experiments could take a prolonged time to finish, we recommend executing them on a server with tools like `GNU Screen` or `nohup`. An example of evaluating the ensemble approaches on the `Google` data set and `RF` model in `100` iteration with `nohup` in the `background` and dump the command line output to `output.out` would be: `nohup python -u evaluate_ensemble_approaches.py -d g -m rf -n 100 > output.out 2>&1 &`.
+As some experiments could take a prolonged time to finish, we recommend executing them on a server with tools like `GNU Screen` or `nohup`. An example of evaluating the ensemble approaches on the `Google` data set and `RF` model in `100` iteration with `nohup` in the `background` and dump the command line output to `log.out` would be: `nohup python -u evaluate_ensemble_approaches.py -d g -m rf -n 100 > log.out 2>&1 &`.
 
 We have the following experiment code available:
-- `evaluate_drift_detection_methods.py` contains code for testing approaches described in RQ2 (i.e., Static, Retrain, DDM, PERM, and Z-test). Note that the code in this file relied on the `concept_drift_detection.py` file in the same folder.
-- `evaluate_ensemble_approaches.py` contains code for testing time-based ensemble approaches (i.e., AWE and SEA). Note that the code in this file relies on the `ensemble_model.py` file in the same folder.
-- `evaluate_drift_detection_oracle.py` contains code for the oracle approach used in RQ2.
+- `evaluate_retraining_approaches.py` contains code for testing approaches described in RQ2 (i.e., Static, Retrain, DDM, PERM, and Z-test). Note that the code in this file relied on the `drift_retrain_model.py` and `utilities.py` files in the same folder.
+- `evaluate_ensemble_approaches.py` contains code for testing time-based ensemble approaches (i.e., AWE and SEA). Note that the code in this file relies on the `ensemble_model.py` and `utilities.py` files in the same folder.
+- `evaluate_online_approaches.py` contains code for the online learning approaches. Note that the code in this file relies on the `online_models.py` and `utilities.py` files in the same folder. Also note that this part of code use multi-process to boost the execution. You can change the number of processes in the code file.
+- `evaluate_retraining_oracle.py` contains code for the oracle approach used in the Discussion section.
+
+The remained Python files contains implementation for models we experimented, including `drift_retrain_model.py`, `ensemble_model.py`, and `online_model.py`, also, `utilities.py` contains auxiliary functions for the experiment code. Please keep these files in the same folder.
 
 ## Experiment Results Data
 This part contains the output data from our main experiments. All output CSV files could be found under the `results` folder.
-We organize the CSV files by which research question they belong. For example, the `rq1_results` subfolder contains CSV files used in the analysis of RQ1.
+We organize the CSV files into two folders. The `preliminary_results` folder contains files for the Preliminary Study section, while the `experiment_results` folder contains files for our main results, we only provide the CSV files after combining separate files together for simplicity.
 
 ## Results Analysis
 This part contains code for the analysis of our datasets and experiment results. All code could be found under the `analysis` folder.
+Before doing any other remained analysis, please first combine the separate CSV files together using `combine_result_files.py` first if you start the experiment on your own (you don't need this step if using the result files we provided).
+
 We have the following code available:
-- `analyze_correlation.py` analyze the changes in dependent and independent variables in RQ1.
-- `analyze_detection_judgement.py` analyze the performance of concept drift detection in RQ2.
-- `plot_figures.R` contains code for illustrating results figures in the paper.
+- `combine_result_files.py` combine the separate CSV result files. You **don't** need to do this if using the result files we provided.
+- `analyze_correlation.py` analyze the changes in dependent and independent variables in the Preliminary Study section.
+- `analyze_detection_judgement.py` analyze the performance of concept drift detection in the Discussion section.
+- `result_analysis.R` contains code for plotting results figures and tables in our main experiment results.

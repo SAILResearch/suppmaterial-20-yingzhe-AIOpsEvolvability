@@ -45,11 +45,11 @@ def obtain_tuned_model(model_name, dataset, period, mode):
     elif model_name == 'cart':
         model = DecisionTreeClassifier(**para_dic)
     elif model_name == 'gbdt':
-        model = XGBClassifier(n_jobs=1, **para_dic)
+        model = XGBClassifier(n_jobs=N_WORKERS, **para_dic)
     elif model_name == 'nn':
         model = MLPClassifier(**para_dic)
     elif model_name == 'rf':
-        model = RandomForestClassifier(**para_dic)
+        model = RandomForestClassifier(n_jobs=N_WORKERS, **para_dic)
     return model
 
 def obtain_param_dist(model_name):
