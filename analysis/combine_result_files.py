@@ -2,15 +2,17 @@ import pandas as pd
 import numpy as np
 
 
-datasets = ['google', 'disk']
+datasets = ['google', 'backblaze', 'alibaba']
 models = ['lr', 'cart', 'rf', 'nn', 'gbdt']
 name_datasets = {
     'google': 'Google',
-    'disk': 'Backblaze'
+    'backblaze': 'Backblaze',
+    'alibaba': 'Alibaba'
 }
 n_periods_dataset = {
     'google': 28,
-    'disk': 36
+    'backblaze': 36,
+    'alibaba': 8
 }
 
 

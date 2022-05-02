@@ -19,6 +19,7 @@ N_WORKERS = 1  # control the number of workers used for RF model
 INPUT_FOLDER = r'./'
 GOOGLE_INPUT_FILE = r'google_job_failure.csv'
 BACKBLAZE_INPUT_FILE = r'disk_failure_v2.csv'
+ALIBABA_INPUT_FILE = r'alibaba_job_data.csv'
 WINDOW_HYPER_PARAMETER_FILE = r'parameter_list_window.csv'
 PERIOD_HYPER_PARAMETER_FILE = r'parameter_list_period.csv'
 
@@ -28,6 +29,8 @@ def obtain_tuned_model(model_name, dataset, period, mode):
         dataset = 'Google'
     elif dataset == 'b':
         dataset = 'Backblaze'
+    elif dataset == 'a':
+        dataset = 'Alibaba'
 
     if mode == 'w': # half of total periods window, for concept drift detection
         df = pd.read_csv(WINDOW_HYPER_PARAMETER_FILE)
@@ -52,14 +55,15 @@ def obtain_tuned_model(model_name, dataset, period, mode):
         model = RandomForestClassifier(n_jobs=N_WORKERS, **para_dic)
     return model
 
+
 def obtain_param_dist(model_name):
     param_dist = None
 
     if model_name == 'lr':
         param_dist = [
-            {'solver': ['newton-cg', 'lbfgs', 'sag'], 'C': loguniform(1e-5, 1e2), 'penalty': ['l2', 'none']},
-            {'solver': ['saga'], 'C': loguniform(1e-5, 1e2), 'penalty': ['l1', 'l2', 'none']},
-            {'solver': ['liblinear'], 'C': loguniform(1e-5, 1e2), 'penalty': ['l1']}
+            {'solver': ['newton-cg', 'lbfgs', 'sag'], 'C': loguniform(1e-2, 1e2), 'penalty': ['l2', 'none']},
+            {'solver': ['saga'], 'C': loguniform(1e-2, 1e2), 'penalty': ['l1', 'l2', 'none', 'elasticnet']},
+            {'solver': ['liblinear'], 'C': loguniform(1e-2, 1e2), 'penalty': ['l1', 'l2']}
         ]
     elif model_name == 'cart':
         param_dist = {
@@ -122,6 +126,8 @@ def obtain_data(dataset, interval='m'):
         return get_google_data()
     elif dataset == 'b':
         return get_disk_data(interval)
+    elif dataset == 'a':
+        return get_alibaba_data()
 
 
 def obtain_feature_names(dataset):
@@ -207,6 +213,27 @@ def get_disk_data(interval='d', production=None):
     return features, labels
 
 
+def get_alibaba_data():
+    path = os.path.join(INPUT_FOLDER, ALIBABA_INPUT_FILE)
+    print('Loading data from', path)
+    df = pd.read_csv(path)
+
+    columns = ['start_time', 
+        'user', 'task_name', 'inst_num', 'plan_cpu', 'plan_mem', 'plan_gpu', 
+        'cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem', 'avg_gpu_wrk_mem', 'max_gpu_wrk_mem']
+    print('Load complete')
+
+    features = df[columns].to_numpy()
+    labels = (df['status']=='Failed').to_numpy()
+
+    print('Preprocessing features')
+    le = preprocessing.LabelEncoder()
+    features[:, 1] = le.fit_transform(features[:, 1])
+    print('Preprocessing complete\n')
+
+    return features, labels
+
+
 def obtain_metrics(labels, probas):
     '''
     Calculate performance on various metrics
@@ -218,13 +245,14 @@ def obtain_metrics(labels, probas):
     Returns:
         (list): [ Precision, Recall, Accuracy, F-Measure, AUC, MCC, Brier Score ]
     '''
-    preds = probas > 0.5
     ret = []
+    preds = probas > 0.5
+    auc = metrics.roc_auc_score(labels, probas)
     ret.append(metrics.precision_score(labels, preds))
     ret.append(metrics.recall_score(labels, preds))
     ret.append(metrics.accuracy_score(labels, preds))
     ret.append(metrics.f1_score(labels, preds))
-    ret.append(metrics.roc_auc_score(labels, probas))
+    ret.append(np.max(auc, 1.0 - auc))
     ret.append(metrics.matthews_corrcoef(labels, preds))
     ret.append(metrics.brier_score_loss(labels, probas))
 
@@ -236,7 +264,11 @@ def downsampling(training_features, training_labels, ratio=10):
 
     idx_true = np.where(training_labels == True)[0]
     idx_false = np.where(training_labels == False)[0]
+    
     #print('Before dowmsampling:', len(idx_true), len(idx_false))
+    if len(idx_true)*ratio >= len(idx_false):
+        return training_features, training_labels
+
     idx_false_resampled = resample(idx_false, n_samples=len(idx_true)*ratio, replace=False)
     idx_resampled = np.concatenate([idx_false_resampled, idx_true])
     idx_resampled.sort()
@@ -281,6 +313,12 @@ def obtain_intervals(dataset):
         start_time = 1
         unit_period = 1  # unit period: one month
         end_time = start_time + 36*unit_period
+    elif dataset == 'a':
+        # time unit in Alibaba: second, tracing time: 
+        start_time = 494319
+        unit_period = 7 * 24 * 60 * 60  # unit period: one week
+        start_time += 3 * 24 * 60 * 60  # the first week contains only 1642 samples
+        end_time = start_time + 8*unit_period
 
     # add one unit for the open-end of range function
     terminals = [i for i in range(start_time, end_time+unit_period, unit_period)]

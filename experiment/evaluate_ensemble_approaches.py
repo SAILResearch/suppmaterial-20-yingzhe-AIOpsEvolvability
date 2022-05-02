@@ -8,7 +8,8 @@ from ensemble_model import SEAModel, AWEModel
 
 
 GOOGLE_OUTPUT_FILE = r'ensemble_google_'
-BACKBLAZE_OUTPUT_FILE = r'ensemble_disk_'
+BACKBLAZE_OUTPUT_FILE = r'ensemble_backblaze_'
+ALIBABA_OUTPUT_FILE = r'ensemble_alibaba_'
 N_ROUNDS = 100
 MODEL_NAME = ''
 DATASET = ''
@@ -69,7 +70,7 @@ def experiment_driver(feature_list, label_list, out_file, n_round):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Experiment on time-based ensemble models')
     parser.add_argument("-m", help="specify the model, random forest by default.", required=True, choices=['lr', 'cart', 'rf', 'gbdt', 'nn'])
-    parser.add_argument("-d", help="specify the dataset, d for Googole and b for Backblaze.", required=True, choices=['g', 'b'])
+    parser.add_argument("-d", help="specify the dataset, g=Google, b=Backblaze, and a=Alibaba.", required=True, choices=['g', 'b', 'a'])
     parser.add_argument("-n", help="specify the testing rounds, 100 by default.", default=100)
     parser.add_argument("-s", help="starting from this iteration.")
     args = parser.parse_args()
@@ -89,6 +90,10 @@ if __name__ == "__main__":
         print('Choose Backblaze as dataset')
         OUTPUT_FILE = BACKBLAZE_OUTPUT_FILE + args.m + '.csv'
         DATASET = 'Backblaze'
+    elif args.d == 'a':
+        print('Choose Alibaba as dataset')
+        OUTPUT_FILE = ALIBABA_OUTPUT_FILE + args.m + '.csv'
+        DATASET = 'Alibaba'
     else:
         exit(-1)
 

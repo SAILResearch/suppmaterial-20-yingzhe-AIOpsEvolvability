@@ -6,7 +6,8 @@ from statsmodels.stats.proportion import proportions_ztest
 
 dic_datasets = {
     'g': 'google',
-    'b': 'disk'
+    'b': 'backblaze',
+    'a': 'alibaba'
 }
 
 
@@ -55,49 +56,67 @@ def z_test(lst1, lst2):
     
 
 def corr_dependent(label_list, dataset):
-    dic = [[0]*len(label_list) for _ in range(len(label_list))]
-    for i in range(len(label_list)):
-        for j in range(i+1, len(label_list)):
+    num_periods = len(label_list)
+    dic = [[0]*num_periods for _ in range(num_periods)]
+    for i in range(num_periods):
+        for j in range(i+1, num_periods):
             # p < 0.05: from different distribution
             #_, p = mannwhitneyu(label_list[i].astype(int), label_list[j].astype(int))
             _, p = z_test(label_list[i], label_list[j])
             dic[i][j] = dic[j][i] = p
-    df = pd.DataFrame(dic, columns=range(1, len(label_list)+1), index=range(1, len(label_list)+1))
+    df = pd.DataFrame(dic, columns=range(1, num_periods+1), index=range(1, num_periods+1))
     df.to_csv('corr_dependent_'+dic_datasets[dataset]+'.csv', index=False)
 
 
 def eff_dependent(label_list, dataset):
-    dic = [[0]*len(label_list) for _ in range(len(label_list))]
-    for i in range(len(label_list)):
-        for j in range(i+1, len(label_list)):
+    num_periods = len(label_list)
+    dic = [[0]*num_periods for _ in range(num_periods)]
+    for i in range(num_periods):
+        for j in range(i+1, num_periods):
             #d = cliffsDelta(label_list[i].astype(int), label_list[j].astype(int))
             d, _ = cohen_d(label_list[i], label_list[j])
             dic[i][j] = dic[j][i] = abs(d)
             print(i, j, d)
-    df = pd.DataFrame(dic, columns=range(1, len(label_list)+1), index=range(1, len(label_list)+1))
+    df = pd.DataFrame(dic, columns=range(1, num_periods+1), index=range(1, num_periods+1))
     df.to_csv('eff_dependent_'+dic_datasets[dataset]+'.csv', index=False)
     
 
 def corr_independent(feature_list, dataset):
-    dic = [[0]*len(label_list) for _ in range(len(feature_list))]
-    feature_counts = [0] * feature_list[0].shape[1]
-    for i in range(feature_list[0].shape[1]):
-        for j in range(len(feature_list)):
+    num_periods = len(feature_list)
+    num_features = feature_list[0].shape[1]
+    dic = [[0]*num_periods for _ in range(num_periods)]
+    feature_counts = [0] * num_features
+    for i in range(num_periods):
+        for j in range(num_periods):
             count = 0 # how many features are from different distributions
-            for k in range(feature_list[0].shape[1]):
+            for k in range(num_features):
                 _, p = mannwhitneyu(feature_list[i][k], feature_list[j][k], alternative='two-sided')
                 if p <= 0.05:
                     count += 1        
                     feature_counts[k] += 1
             dic[i][j] = dic[j][i] = count
-    df = pd.DataFrame(dic, columns=range(1, len(label_list)+1), index=range(1, len(label_list)+1))
+    df = pd.DataFrame(dic, columns=range(1, num_periods+1), index=range(1, num_periods+1))
     df.to_csv('corr_independent_'+dic_datasets[dataset]+'.csv', index=False)
     print(feature_counts)
 
 
+def data_analysis(label_list, dataset):
+    num_periods = len(label_list)
+    failure_rates = []
+    data_sizes = []
+    for i in range(num_periods):
+        failure_rates.append(np.count_nonzero(label_list[i])/len(label_list[i]))
+        data_sizes.append(len(label_list[i]))
+    df = pd.DataFrame({'x': range(1, num_periods+1), 'y': failure_rates})
+    df.to_csv('failure_rate_'+dic_datasets[dataset]+'.csv', index=False)
+    df = pd.DataFrame({'x': range(1, num_periods+1), 'y': data_sizes})
+    df.to_csv('data_size_'+dic_datasets[dataset]+'.csv', index=False)
+
+
 if __name__ == "__main__":
-    for dataset in ['g', 'b']:
+    for dataset in ['g', 'b', 'a']:
         feature_list, label_list = obtain_period_data(dataset)
-        corr_independent(feature_list, dataset)
+        #corr_independent(feature_list, dataset)
         corr_dependent(label_list, dataset)
         eff_dependent(label_list, dataset)
+        data_analysis(label_list, dataset)
