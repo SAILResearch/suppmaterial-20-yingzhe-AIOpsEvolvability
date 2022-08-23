@@ -8,10 +8,9 @@ We organize the replication package into four file folders.
 4. Results data: this folder contains the results for our paper, including the results for metrics other than the AUC metric used in our paper;
 3. Results analysis: this folder contains code for analyzing the dataset and experiment results.
 
-Our code is based the following packages and versions:
+Our experiment code is using the following packages and versions:
 
 - Python: 3.8.3
-- R: 3.6.3
 - Numpy: 1.18.5
 - Scipy: 1.5.0
 - Pandas: 1.0.5
@@ -29,18 +28,24 @@ This part contains code and materials for preprocessing the dataset. All code co
 ### Prepare dataset
 We offer two approaches to prepare the data files: 1) download the data files provided by us on the [release page](https://github.com/SAILResearch/suppmaterial-20-yingzhe-AIOpsEvolvability/releases/); 2) or build the data files by yourself from the raw dataset and the preprocessing code provided by us.
 
+#### Build the Google data file
+For the Google cluster trace dataset, you could also download the prepared CSV file (`google_job_failure.zip`) from this project's release page.
+Otherwise, you could build the same file following similar procedures to the Backblaze dataset using the `preprocess_google.py` file. You can find the raw cluster data [here](https://github.com/google/cluster-data/blob/master/ClusterData2011_2.md).
+
 #### Build the Backblaze data file
 You could find the zipped CSV file (`disk_failure_v2.zip`) for the Backblaze disk trace dataset. Unzip and place under the same folder as the experiment code files would work.
 Otherwise, you could build the raw data file following the following steps:
 1. Download the raw dataset from the [Backblaze website](https://www.backblaze.com/b2/hard-drive-test-data.html). 
    In our experiment, we use the disk stats data from 2015 to 2017 (including ZIP file for `2015 Data`, `2016 Data, Q1` to `2016 Data, Q4`, and `2017 Data, Q1` to `2017 Data, Q4`).
 2. Unzip all the raw data files and place all the CSV files (should be in the format `YYYY-MM-DD.csv`) in a single folder.
-3. Update the `folder` variable at the head of the `preprocess_disk.py` file to where you store the CSV files, then execute the same Python file to extract samples. 
+3. Update the `folder` variable at the head of the `preprocess_backblaze.py` file to where you store the CSV files, then execute the same Python file to extract samples. 
    Please be advised that it could take a while, and the output file would take several Gigabytes.
 
-#### Build the Google data file
-For the Google cluster trace dataset, you could also download the prepared CSV file (`google_job_failure.zip`) from this project's release page.
-Otherwise, you could build the same file following similar procedures to the Backblaze dataset using the `preprocess_google.py` file. You can find the raw cluster data [here](https://github.com/google/cluster-data/blob/master/ClusterData2011_2.md).
+#### Build the Alibaba data file
+You could also find the prepared CSV file for this dataset in the release page. 
+Otherwise, you may build the same data file with our preprocessing script using the following steps:
+1. Download the Alibaba GPU cluster following the instruction on the [Alibaba GPU trace data page](https://github.com/alibaba/clusterdata/tree/master/cluster-trace-gpu-v2020).
+2. Specify the `data` folder of the downloaded raw data in the `preprocess_alibaba.py` file then execute.
 
 ### Hyperparemter tuning
 We tune the hyperparameter on each sliding window and each single period in advance to save time when repeating our experiment 100 times.
