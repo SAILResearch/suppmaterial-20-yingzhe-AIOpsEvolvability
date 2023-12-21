@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import glob
 import os
+import timeit
 
 INPUT_FOLDER = './Google_cluster_data/'
 INTERVAL = 300000000
@@ -120,4 +121,7 @@ def google_job_level():
 
 
 if __name__ == "__main__":
+    start_time = timeit.default_timer()
     google_job_level()
+    processing_time = timeit.default_timer() - start_time
+    print('Job done, consuming time: ' + str(processing_time))

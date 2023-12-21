@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import numpy as np
 import os
+import timeit
 
 folder = './Backblaze'
 start_date = date(2015, 1, 1)
@@ -76,8 +77,11 @@ def build_data(start_date):
 
 
 if __name__ == '__main__':
+    start_time = timeit.default_timer()
     cur_date = start_date
     while cur_date + timedelta(days=13) <= end_date:
         out_df = build_data(cur_date)
         out_df.to_csv(out_file, mode='a', index=False, header=(not os.path.isfile(out_file)))
         cur_date = cur_date + timedelta(days=1)
+    processing_time = timeit.default_timer() - start_time
+    print('Job done, consuming time: ' + str(processing_time))
