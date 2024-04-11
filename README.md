@@ -1,5 +1,5 @@
 # AIOps Evolution - Supplemental Materials
-This repository contains the replication package for the paper "Assessing the Maturity of Model Maintenance Techniques for AIOps Solutions".
+This repository contains the replication package for the paper "On the Model Update Strategies for Supervised Learning in AIOps Solutions".
 
 ## Introduction
 We organize the replication package into four file folders.
